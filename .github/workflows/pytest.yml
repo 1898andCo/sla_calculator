@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   pytest:
-    runs-on: [self-hosted, Ubuntu, Common]
+    runs-on: ubuntu-latest
     name: Run Pytest
     steps:
       - name: Checkout Code
@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install e98-datamodels --extra-index-url https://dl.cloudsmith.io/${{ secrets.PYPITOKEN }}/1898-and-co/data-models/python/simple/ && pip install .[dev] && pip install httpx mongomock pytest pytest-md pytest-emoji
+        run: pip install .[dev] && pip install pytest pytest-md pytest-emoji
       - name: Run pytest
         uses: pavelzw/pytest-action@v2
         with:
