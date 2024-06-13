@@ -1,4 +1,3 @@
-from datetime import time
 import pendulum
 import holidays as pyholidays
 
@@ -103,7 +102,7 @@ class SLA_Calculator:
 
     def _next_day_open_time(self, start_time):
         start_time = self._wrap_pendulum_datetime(start_time)
-        start_time = self._next_working_day(start_time)
+        start_time = self._next_working_day(start_time.add(days=1))
         start_time = pendulum.datetime(
             start_time.year,
             start_time.month,
@@ -113,14 +112,7 @@ class SLA_Calculator:
             0,
             tz=pendulum.local_timezone(),
         )
-        return start_time
 
-    def check_working_days(self, start_time):
-        start_time = self._wrap_pendulum_datetime(start_time)
-        while (
-            not self._is_working_day(start_time) or start_time.hour >= self.close_hour
-        ):
-            start_time = self._next_working_day(start_time)
         return start_time
 
     def _calculate_time_left_today(self, start_time):
@@ -136,11 +128,25 @@ class SLA_Calculator:
         )
         return start_time.diff(close_time).in_minutes()
 
+    def check_working_days(self, start_time):
+        start_time = self._wrap_pendulum_datetime(start_time)
+        while (
+            not self._is_working_day(start_time) or start_time.hour >= self.close_hour
+        ):
+            start_time = self._next_working_day(start_time)
+        return start_time
+
     def calculate(
         self,
         start_time,
-        sla_in_minutes=4,
+        hours=0,
+        minutes=0,
+        duration=None,
     ):
+        if duration:
+            hours = duration.hours
+            minutes = duration.minutes
+        sla = (hours * 60) + minutes
         sla_time = None
         start_time = self._wrap_pendulum_datetime(start_time)
 
@@ -158,10 +164,10 @@ class SLA_Calculator:
                 tz=pendulum.local_timezone(),
             )
         time_left_today = self._calculate_time_left_today(start_time)
-        if time_left_today >= sla_in_minutes:
-            sla_time = start_time.add(minutes=sla_in_minutes)
+        if time_left_today >= sla:
+            sla_time = start_time.add(minutes=sla)
         else:
             next_day = self._next_day_open_time(start_time)
-            sla_in_minutes = sla_in_minutes - time_left_today 
-            return self.calculate(next_day, sla_in_minutes=sla_in_minutes)
+            sla = sla - time_left_today
+            return self.calculate(next_day, minutes=sla)
         return sla_time

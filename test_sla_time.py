@@ -9,7 +9,7 @@ sla_calc = SLA_Calculator(
 def test_sla_before_business_hours():
     # 1 AM start time on a business day
     start_time = pendulum.datetime(2022, 1, 3, 1, 0, 0, tz=pendulum.local_timezone())
-    sla_time = sla_calc.calculate(start_time, 60)
+    sla_time = sla_calc.calculate(start_time, minutes=60)
     # should be 10 AM the same day - 9am + 1 hour
     assert sla_time.isoformat() == "2022-01-03T10:00:00-05:00"
 
@@ -17,7 +17,7 @@ def test_sla_before_business_hours():
 def test_sla_on_weekend():
     # 1 PM start time on a Saturday
     start_time = pendulum.datetime(2022, 1, 1, 13, 0, 0, tz=pendulum.local_timezone())
-    sla_time = sla_calc.calculate(start_time, 60)
+    sla_time = sla_calc.calculate(start_time, minutes=60)
     # should be 10 AM the following Monday - 9am + 1 hour
     assert sla_time.isoformat() == "2022-01-03T10:00:00-05:00"
 
@@ -25,13 +25,14 @@ def test_sla_on_weekend():
 def test_sla_on_holiday():
     # 1 PM start time on a holiday
     start_time = pendulum.datetime(2024, 1, 1, 13, 0, 0, tz=pendulum.local_timezone())
-    sla_time = sla_calc.calculate(start_time, 60)
+    sla_time = sla_calc.calculate(start_time, minutes=60)
     # should be 10 AM the following business day - 9am + 1 hour
     assert sla_time.isoformat() == "2024-01-02T10:00:00-05:00"
+
 
 def test_not_enough_time_left():
     # 4 PM start time with 1 hour left in the day
     start_time = pendulum.datetime(2022, 1, 3, 16, 0, 0, tz=pendulum.local_timezone())
-    sla_time = sla_calc.calculate(start_time, 60)
+    sla_time = sla_calc.calculate(start_time, minutes=120)
     # should be 9 AM the following day - 9am + 1 hour
-    assert sla_time.isoformat() == "2022-01-04T09:00:00-05:00"
+    assert sla_time.isoformat() == "2022-01-04T10:00:00-05:00"
