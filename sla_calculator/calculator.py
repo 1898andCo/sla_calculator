@@ -33,6 +33,8 @@ class SLA_Calculator:
         self.open_hour = kwargs.get("open_hour", 9)
         self.close_hour = kwargs.get("close_hour", 17)  # what a way to make a living
         self.holidays = []
+        self.timezone = pendulum.Timezone(kwargs.get("timezone", "UTC"))
+        pendulum.set_local_timezone(self.timezone)
         # get holidays for the country and province/state
         if kwargs.get("country_name"):
             self.holidays = list(
@@ -45,10 +47,7 @@ class SLA_Calculator:
             )
         # add any manual holidays
         manual_holidays = kwargs.get("holidays", [])
-        if kwargs.get("timezone"):
-            pendulum.set_local_timezone(kwargs.get("timezone"))
-        else:
-            pendulum.set_local_timezone()
+
         if not isinstance(manual_holidays, list):
             manual_holidays = [manual_holidays]
         self.holidays.extend(manual_holidays)
@@ -65,9 +64,10 @@ class SLA_Calculator:
                 tm.second,  # type: ignore [attr-defined]
                 tz=tm.timezone_name,  # type: ignore [attr-defined]
             )
+
         else:
             t = start_time
-
+        t = t.in_tz(self.timezone)
         return t
 
     def _is_weekend(self, start_time):
@@ -96,7 +96,7 @@ class SLA_Calculator:
                 self.open_hour,
                 0,
                 0,
-                tz=pendulum.local_timezone(),
+                tz=self.timezone,
             )
         return start_time
 
@@ -110,7 +110,7 @@ class SLA_Calculator:
             self.open_hour,
             0,
             0,
-            tz=pendulum.local_timezone(),
+            tz=self.timezone,
         )
 
         return start_time
@@ -124,7 +124,7 @@ class SLA_Calculator:
             self.close_hour,
             0,
             0,
-            tz=pendulum.local_timezone(),
+            tz=self.timezone,
         )
         return start_time.diff(close_time).in_minutes()
 
@@ -143,11 +143,12 @@ class SLA_Calculator:
         minutes=0,
         duration=None,
     ):
+        if duration and (hours or minutes):
+            raise ValueError("Cannot pass both duration and hours/minutes")
         if duration:
             hours = duration.hours
             minutes = duration.minutes
         sla = (hours * 60) + minutes
-        sla_time = None
         start_time = self._wrap_pendulum_datetime(start_time)
 
         start_time = self.check_working_days(start_time)
@@ -161,13 +162,12 @@ class SLA_Calculator:
                 self.open_hour,
                 0,
                 0,
-                tz=pendulum.local_timezone(),
+                tz=self.timezone,
             )
         time_left_today = self._calculate_time_left_today(start_time)
-        if time_left_today >= sla:
-            sla_time = start_time.add(minutes=sla)
-        else:
+        # if there is not enough time to handle the SLA today, do as much as possible today and continue tomorrow
+        if time_left_today < sla:
             next_day = self._next_day_open_time(start_time)
-            sla = sla - time_left_today
-            return self.calculate(next_day, minutes=sla)
-        return sla_time
+            return self.calculate(next_day, minutes=(sla - time_left_today))
+
+        return start_time.add(minutes=sla)

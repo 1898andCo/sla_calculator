@@ -1,10 +1,10 @@
 import pendulum
 from sla_calculator import SLA_Calculator
 
-holiday_date = pendulum.datetime(2022, 1, 3, tz=pendulum.local_timezone())
-weekend_start_time = pendulum.datetime(2022, 1, 1, 9, 0, 0, tz=pendulum.local_timezone())
-working_start_time = pendulum.datetime(2022, 1, 4, 9, 0, 0, tz=pendulum.local_timezone())
-sla_calc = SLA_Calculator(holidays=[holiday_date.date()])
+holiday_date = pendulum.datetime(2022, 1, 3, tz="America/Chicago")
+weekend_start_time = pendulum.datetime(2022, 1, 1, 9, 0, 0, tz="America/Chicago")
+working_start_time = pendulum.datetime(2022, 1, 4, 9, 0, 0, tz="America/Chicago")
+sla_calc = SLA_Calculator(holidays=[holiday_date.date()], timezone="America/Chicago")
 
 
 def test_is_working_day():
