@@ -13,7 +13,7 @@ permissions:
 jobs:
   pr_agent_job:
     if: ${{ github.event.sender.type != 'Bot' }}
-    runs-on: [self-hosted, Ubuntu, Common]
+    runs-on: ubuntu-latest
     name: Run pr agent on every pull request, respond to user comments
     steps:
       - name: PR Agent action step
