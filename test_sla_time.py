@@ -2,7 +2,12 @@ from sla_calculator import SLA_Calculator
 import pendulum
 
 sla_calc = SLA_Calculator(
-    country_name="US", province="MO", state="MO", timezone="America/Chicago", open_hour=9, close_hour=17
+    country_name="US",
+    province="MO",
+    state="MO",
+    timezone="America/Chicago",
+    open_hour=9,
+    close_hour=17,
 )
 
 
@@ -34,7 +39,5 @@ def test_not_enough_time_left():
     # 4 PM start time with 1 hour left in the day
     start_time = pendulum.datetime(2022, 1, 3, 16, 0, 0, tz="America/Chicago")
     sla_time = sla_calc.calculate(start_time, minutes=120)
-    print(start_time)
-    print(sla_time)
     # should be 9 AM the following day - 9am + 1 hour
     assert sla_time.isoformat() == "2022-01-04T10:00:00-06:00"
